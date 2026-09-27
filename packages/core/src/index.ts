@@ -70,6 +70,19 @@ export type {
   ScrapeLocationOptions,
 } from "./scrape/location.ts";
 
+export { parseInstagramLink } from "./parse/link.ts";
+export { readLinkPlace } from "./scrape/link.ts";
+export type { ReadLinkPlaceOptions } from "./scrape/link.ts";
+export { InstagramLinkError } from "./types/link.ts";
+export type {
+  InstagramLink,
+  InstagramLinkErrorCode,
+  LinkPlace,
+  LinkPlaceCoordinatesSource,
+  LinkPlaceLocation,
+  LinkPlacePrecision,
+} from "./types/link.ts";
+
 export {
   downloadMediaToFile,
   downloadMediaSlots,

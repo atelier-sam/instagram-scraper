@@ -12,6 +12,7 @@
  *   instagram-scraper highlights <username>       discover + scrape all of a profile's highlights
  *   instagram-scraper hashtag <tag>               scrape /explore/tags/{tag}/
  *   instagram-scraper location <id>               read a place by id (location page, JSON surface in fallback)
+ *   instagram-scraper link <url>                  post / reel / location link → place (name + coordinates)
  *
  * Global options (before or after the command):
  *   --min-delay <ms>   minimum pause between two requests (default 1000; max = min + 2000)
@@ -21,6 +22,9 @@
  *   -o <path>       write JSON to a file (default: stdout)
  *   --download      also download HD media to the FilesystemAdapter tree
  *   --root <dir>    archive root (default: ~/.local/share/instagram-scraper)
+ *
+ * `link` also accepts:
+ *   --no-lookup        do not look the place up by id when the post has no coordinates
  *
  * `highlights` also accepts:
  *   --album <titles>   only albums whose title matches (comma-separated)
@@ -39,8 +43,10 @@ import {
   downloadMediaSlots,
   downloadMediaToFile,
   parseHashtagFromHtml,
+  parseInstagramLink,
   parseProfileFromHtml,
   parseProfilePostsFromHtml,
+  readLinkPlace,
   scrapeHighlightById,
   scrapeHighlightsTray,
   scrapeLocationById,
@@ -366,6 +372,31 @@ scrapingCommand(
     await http.dispose();
   }
 });
+
+program
+  .command("link <url>")
+  .description(
+    "Read the place of an Instagram post / reel / location link (name, coordinates when served).",
+  )
+  .option("-o, --out <path>", "Write JSON to a file (default: stdout)")
+  .option("--no-lookup", "Do not look the place up by id when the post has no coordinates")
+  .action(async (url: string, options: { out?: string; lookup: boolean }) => {
+    // Refuse a foreign link before launching the browser (readLinkPlace
+    // refuses it too, but only after the session is opened).
+    if (!parseInstagramLink(url)) {
+      throw new Error(`Not an Instagram post, reel or location link: ${url}`);
+    }
+    const http = await openHttp();
+    try {
+      const place = await readLinkPlace(http, url, {
+        lookupLocation: options.lookup,
+        log: stepLog(),
+      });
+      await emit(place, options.out);
+    } finally {
+      await http.dispose();
+    }
+  });
 
 program.parseAsync(process.argv).catch((err) => {
   process.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`);

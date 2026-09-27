@@ -30,6 +30,16 @@ across the monorepo packages.
 - CLI global options `--min-delay <ms>` (pause between two requests) and
   `--verbose` (one stderr line per request and per miss: URLs and payload
   field names, never cookies or bodies).
+- **Link → place** — `parseInstagramLink(url)` (pure: `/p/`, `/reel/`,
+  `/reels/`, `/tv/`, `/{user}/p/`, `/{user}/reel/`, `explore/locations/{id}`,
+  hosts `instagram.com`, `www.`, `instagr.am`; sharer parameters ignored;
+  anything else → null) and `readLinkPlace(http, url)` → `{ kind,
+  shortcode?, author?, caption?, location: { id, name, lat?, lng?,
+  address?, city?, precision: "point" | "nom", coordinatesFrom? } | null }`.
+  Coordinates come from the post, else from `scrapeLocationById`, else
+  `precision: "nom"` — never a guessed point. `InstagramLinkError`
+  (`unsupported`, no request made / `not_found`).
+- CLI `link <url>` (`--no-lookup` keeps a post link to one request).
 
 ## 0.3.0 — 2026-05-17
 
