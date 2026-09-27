@@ -18,6 +18,7 @@ export {
   AuthError,
   CheckpointRequiredError,
   LoginRequiredError,
+  RateLimitedError,
 } from "./types/auth.ts";
 export type { InstagramSessionCookies } from "./types/auth.ts";
 export type { InstagramProfile } from "./types/profile.ts";
@@ -58,8 +59,29 @@ export type {
   HashtagPostSummary,
   InstagramHashtag,
 } from "./parse/hashtag.ts";
-export { parseLocationFromHtml } from "./parse/location.ts";
+export { parseLocationFromHtml, parseLocationFromJson } from "./parse/location.ts";
 export type { InstagramLocationPage } from "./parse/location.ts";
+export { scrapePostByShortcode } from "./scrape/post.ts";
+export type { HtmlFetcher } from "./scrape/post.ts";
+export { scrapeLocationById } from "./scrape/location.ts";
+export type {
+  LocationSurface,
+  ScrapedLocation,
+  ScrapeLocationOptions,
+} from "./scrape/location.ts";
+
+export { parseInstagramLink } from "./parse/link.ts";
+export { readLinkPlace } from "./scrape/link.ts";
+export type { ReadLinkPlaceOptions } from "./scrape/link.ts";
+export { InstagramLinkError } from "./types/link.ts";
+export type {
+  InstagramLink,
+  InstagramLinkErrorCode,
+  LinkPlace,
+  LinkPlaceCoordinatesSource,
+  LinkPlaceLocation,
+  LinkPlacePrecision,
+} from "./types/link.ts";
 
 export {
   downloadMediaToFile,

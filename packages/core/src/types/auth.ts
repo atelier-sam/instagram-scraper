@@ -37,3 +37,18 @@ export class CheckpointRequiredError extends AuthError {
     this.name = "CheckpointRequiredError";
   }
 }
+
+/**
+ * Instagram is throttling the session (HTTP 429, "Please wait a few
+ * minutes", `feedback_required`).
+ *
+ * Extends {@link AuthError} on purpose: a caller that stops everything on
+ * an auth failure must stop on throttling too — retrying or falling back to
+ * another surface is exactly what turns a rate limit into a checkpoint.
+ */
+export class RateLimitedError extends AuthError {
+  constructor(message = "Instagram is rate-limiting this session — stop and retry much later") {
+    super(message);
+    this.name = "RateLimitedError";
+  }
+}

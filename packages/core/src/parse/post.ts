@@ -19,6 +19,7 @@
 
 import type { InstagramLocation, InstagramPost, InstagramPostMedia } from "../types/post.ts";
 import { extractApolloCache } from "./apolloCache.ts";
+import { readCoordinates, readId, readText } from "./coordinates.ts";
 
 const POST_FIELD = "xdt_api__v1__media__shortcode__web_info";
 
@@ -77,6 +78,16 @@ interface LocationRaw {
   name?: string;
   slug?: string;
   short_name?: string;
+  /**
+   * Measured 2026-09-27 on 3 located posts out of 3: the web payload's
+   * `location` is `{ __typename, lat, lng, name, pk, profile_pic_url }`.
+   * Still optional (read through {@link readCoordinates}); `address` and
+   * `city` were absent there and are kept only if a payload carries them.
+   */
+  lat?: number | string | null;
+  lng?: number | string | null;
+  address?: string | null;
+  city?: string | null;
 }
 
 /**
@@ -190,13 +201,29 @@ function areaOf(c: { width?: number; height?: number } | undefined): number {
   return w * h;
 }
 
-function mapLocation(raw: LocationRaw | null | undefined): InstagramLocation | undefined {
-  if (!raw) return undefined;
-  const idRaw = raw.pk ?? raw.id;
-  const name = raw.name;
-  if (idRaw === undefined || idRaw === null || !name) return undefined;
-  const loc: InstagramLocation = { id: String(idRaw), name };
-  if (raw.slug) loc.slug = raw.slug;
+/**
+ * Keeps the place a post is tagged at. Coordinates, address and city are
+ * kept only when the payload carries them; nothing is ever inferred here.
+ * A location without an id is dropped: the id is what lets a caller look
+ * the place up later (`scrapeLocationById`).
+ */
+export function mapLocation(raw: LocationRaw | null | undefined): InstagramLocation | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const id = readId(raw.pk) ?? readId(raw.id);
+  const name = readText(raw.name);
+  if (!id || !name) return undefined;
+  const loc: InstagramLocation = { id, name };
+  const slug = readText(raw.slug);
+  if (slug) loc.slug = slug;
+  const coords = readCoordinates(raw.lat, raw.lng);
+  if (coords) {
+    loc.lat = coords.lat;
+    loc.lng = coords.lng;
+  }
+  const address = readText(raw.address);
+  if (address) loc.address = address;
+  const city = readText(raw.city);
+  if (city) loc.city = city;
   return loc;
 }
 
