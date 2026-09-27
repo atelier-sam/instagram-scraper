@@ -4,6 +4,33 @@ All notable changes to `instagram-scraper`. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are shared
 across the monorepo packages.
 
+## Unreleased
+
+### Fixed
+- Location page: Instagram renamed its payload to `xdt_location_get_web_info`
+  (`native_location_data.location_info`: `location_id`, `name`, `lat`,
+  `lng`, `slug`, `location_address`, `location_city`…), next to the post
+  grid in `xdt_location_get_web_info_tab.edges[].node`. The 2026-05 field
+  `xdt_api__v1__locations__web_info` is still read as a fallback. Measured
+  2026-09-27 with a logged-in session; `location <id>` works again.
+- A post's place keeps its coordinates: `mapLocation` keeps `lat` / `lng`
+  (both or neither, WGS84-checked, `(0, 0)` refused) and `address` /
+  `city` when present. `InstagramLocation` gains these optional fields.
+
+### Added
+- `scrapeLocationById(http, id)` — location page first, the JSON surface
+  `?__a=1&__d=dis` (instaloader's) in fallback only (on 2026-09-27 it
+  answered a browser navigation with the HTML app shell, no payload).
+  Resolves null when unreadable; throws the typed stop errors (checkpoint,
+  login page, rate limit) and never falls back after one. CLI `location`
+  goes through it.
+- `scrapePostByShortcode(http, shortcode)`; CLI `post` goes through it.
+- `RateLimitedError` (extends `AuthError`) for HTTP 429 and throttling
+  envelopes.
+- CLI global options `--min-delay <ms>` (pause between two requests) and
+  `--verbose` (one stderr line per request and per miss: URLs and payload
+  field names, never cookies or bodies).
+
 ## 0.3.0 — 2026-05-17
 
 ### Added

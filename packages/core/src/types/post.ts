@@ -19,6 +19,16 @@ export type InstagramLocation = {
   id: string;
   name: string;
   slug?: string;
+  /**
+   * WGS84 coordinates, only when the payload carries BOTH of them as valid
+   * numbers. Never guessed: a location without them is still a named place
+   * (resolve it by id with `scrapeLocationById`, or by name elsewhere).
+   */
+  lat?: number;
+  lng?: number;
+  /** Street address and city, when Instagram exposes them. */
+  address?: string;
+  city?: string;
 };
 
 export type InstagramPost = {

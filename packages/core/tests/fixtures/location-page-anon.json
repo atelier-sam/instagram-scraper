@@ -1,0 +1,106 @@
+{
+  "require": [
+    [
+      "ScheduledServerJS",
+      "handle",
+      null,
+      [
+        {
+          "__bbox": {
+            "require": [
+              [
+                "RelayPrefetchedStreamCache",
+                "next",
+                [],
+                [
+                  "adp_PolarisLocationPageQueryRelayPreloader_fixture",
+                  {
+                    "__bbox": {
+                      "complete": true,
+                      "result": {
+                        "data": {
+                          "xdt_location_get_web_info": {
+                            "native_location_data": {
+                              "location_info": {
+                                "name": "Kotor, Montenegro",
+                                "category": "City",
+                                "media_count": 200184,
+                                "lat": 42.425024312505,
+                                "lng": 18.77028924553,
+                                "slug": "kotor-montenegro",
+                                "location_id": "134420540554918",
+                                "location_address": "",
+                                "location_city": "",
+                                "location_zip": ""
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              ],
+              [
+                "RelayPrefetchedStreamCache",
+                "next",
+                [],
+                [
+                  "adp_PolarisLocationPageTabQueryRelayPreloader_fixture",
+                  {
+                    "__bbox": {
+                      "complete": true,
+                      "result": {
+                        "data": {
+                          "xdt_location_get_web_info_tab": {
+                            "edges": [
+                              {
+                                "node": {
+                                  "code": "FIXTURElOC1",
+                                  "pk": "3000000000000000101",
+                                  "taken_at": 1700000000,
+                                  "media_type": 1,
+                                  "like_count": 12,
+                                  "comment_count": 1,
+                                  "image_versions2": {
+                                    "candidates": [
+                                      {
+                                        "url": "https://example.invalid/fixture-thumb.jpg",
+                                        "width": 640,
+                                        "height": 640
+                                      }
+                                    ]
+                                  },
+                                  "user": {
+                                    "pk": "900000001",
+                                    "username": "compte_exemple"
+                                  },
+                                  "location": {
+                                    "pk": 134420540554918,
+                                    "lat": 42.4293342,
+                                    "lng": 18.7701058,
+                                    "name": "Kotor, Montenegro"
+                                  },
+                                  "__typename": "XDTMediaDict"
+                                },
+                                "cursor": null
+                              }
+                            ],
+                            "page_info": {
+                              "end_cursor": "FIXTURE",
+                              "has_next_page": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              ]
+            ]
+          }
+        }
+      ]
+    ]
+  ]
+}

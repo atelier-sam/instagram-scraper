@@ -11,7 +11,11 @@
  *   instagram-scraper highlight <id>              scrape one permanent highlight album
  *   instagram-scraper highlights <username>       discover + scrape all of a profile's highlights
  *   instagram-scraper hashtag <tag>               scrape /explore/tags/{tag}/
- *   instagram-scraper location <id>               scrape /explore/locations/{id}/
+ *   instagram-scraper location <id>               read a place by id (location page, JSON surface in fallback)
+ *
+ * Global options (before or after the command):
+ *   --min-delay <ms>   minimum pause between two requests (default 1000; max = min + 2000)
+ *   --verbose          log each request and each miss on stderr (no cookie, no body)
  *
  * Every scraping command accepts:
  *   -o <path>       write JSON to a file (default: stdout)
@@ -35,12 +39,12 @@ import {
   downloadMediaSlots,
   downloadMediaToFile,
   parseHashtagFromHtml,
-  parseLocationFromHtml,
-  parsePostFromHtml,
   parseProfileFromHtml,
   parseProfilePostsFromHtml,
   scrapeHighlightById,
   scrapeHighlightsTray,
+  scrapeLocationById,
+  scrapePostByShortcode,
   scrapeStoriesForUser,
 } from "@atelier/instagram-scraper-core";
 import { FilesystemAdapter } from "@atelier/instagram-scraper-storage";
@@ -51,12 +55,19 @@ const STATE_PATH = process.env["IG_STATE"] ?? DEFAULT_STATE;
 const DEFAULT_ROOT = join(homedir(), ".local", "share", "instagram-scraper");
 
 type SharedOpts = { out?: string; download?: boolean; root?: string };
+type GlobalOpts = { minDelay?: number; verbose?: boolean };
 
 const program = new Command();
 program
   .name("instagram-scraper")
   .description("Scrape Instagram profiles, posts, reels, stories, highlights, hashtags, locations.")
-  .version("0.3.0");
+  .version("0.3.0")
+  .option(
+    "--min-delay <ms>",
+    "Minimum pause between two requests, in ms (default 1000; the pause is drawn up to min + 2000)",
+    parseDelay,
+  )
+  .option("--verbose", "Log each request and each miss on stderr (never cookies or bodies)");
 
 const auth = program.command("auth").description("Authentication");
 auth
@@ -147,10 +158,7 @@ scrapingCommand("post <shortcode>", "Scrape a single post or reel by shortcode."
   async (shortcode: string, options: SharedOpts) => {
     const http = await openHttp();
     try {
-      const html = await http.fetchHtml(
-        `https://www.instagram.com/p/${encodeURIComponent(shortcode)}/`,
-      );
-      const post = parsePostFromHtml(html, shortcode);
+      const post = await scrapePostByShortcode(http, shortcode);
       if (!post) throw new Error(`No post data found for ${shortcode}`);
       await emit(post, options.out);
       if (options.download) {
@@ -345,21 +353,19 @@ scrapingCommand("hashtag <tag>", "Scrape /explore/tags/{tag}/.").action(
   },
 );
 
-scrapingCommand("location <id>", "Scrape /explore/locations/{id}/.").action(
-  async (id: string, options: SharedOpts) => {
-    const http = await openHttp();
-    try {
-      const html = await http.fetchHtml(
-        `https://www.instagram.com/explore/locations/${encodeURIComponent(id)}/`,
-      );
-      const result = parseLocationFromHtml(html, id);
-      if (!result) throw new Error(`No location data found for id=${id}`);
-      await emit(result, options.out);
-    } finally {
-      await http.dispose();
-    }
-  },
-);
+scrapingCommand(
+  "location <id>",
+  "Read a place by id: the /explore/locations/{id}/ page, then the JSON surface (?__a=1&__d=dis).",
+).action(async (id: string, options: SharedOpts) => {
+  const http = await openHttp();
+  try {
+    const result = await scrapeLocationById(http, id, { log: stepLog() });
+    if (!result) throw new Error(`No location data found for id=${id}`);
+    await emit(result, options.out);
+  } finally {
+    await http.dispose();
+  }
+});
 
 program.parseAsync(process.argv).catch((err) => {
   process.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`);
@@ -376,9 +382,26 @@ function scrapingCommand(signature: string, description: string): Command {
 }
 
 async function openHttp(): Promise<HttpClient> {
-  const http = new HttpClient();
+  const { minDelay } = program.opts<GlobalOpts>();
+  const http = new HttpClient(
+    minDelay === undefined ? {} : { minJitterMs: minDelay, maxJitterMs: minDelay + 2000 },
+  );
   await http.initWithStorageState(STATE_PATH);
   return http;
+}
+
+/** `--verbose` step log on stderr (stdout stays pure JSON). */
+function stepLog(): ((message: string) => void) | undefined {
+  if (!program.opts<GlobalOpts>().verbose) return undefined;
+  return (message) => process.stderr.write(`· ${message}\n`);
+}
+
+function parseDelay(value: string): number {
+  const ms = Number.parseInt(value, 10);
+  if (!Number.isFinite(ms) || ms < 0) {
+    throw new Error(`--min-delay expects milliseconds, got "${value}"`);
+  }
+  return ms;
 }
 
 /**
